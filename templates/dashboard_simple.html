@@ -1,0 +1,631 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Autonomous NMS - Dark Glass Dashboard</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #0a0a0a 0%, #1a1a2e 100%);
+            color: #e0e0e0;
+            overflow-x: hidden;
+        }
+
+        /* Dark Glass Effect */
+        .glass {
+            background: rgba(20, 20, 40, 0.7);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 12px;
+            box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
+        }
+
+        .header {
+            padding: 20px 40px;
+            background: rgba(10, 10, 30, 0.9);
+            border-bottom: 2px solid #00d4ff;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .header h1 {
+            color: #00d4ff;
+            font-size: 28px;
+            text-shadow: 0 0 10px rgba(0, 212, 255, 0.5);
+        }
+
+        .status-badge {
+            padding: 8px 20px;
+            border-radius: 20px;
+            font-weight: bold;
+            display: inline-block;
+        }
+
+        .status-running {
+            background: linear-gradient(135deg, #00ff88, #00cc6f);
+            color: #0a0a0a;
+        }
+
+        .status-stopped {
+            background: linear-gradient(135deg, #ff4444, #cc0000);
+            color: white;
+        }
+
+        .controls {
+            display: flex;
+            gap: 10px;
+        }
+
+        .btn {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: bold;
+            transition: all 0.3s;
+            font-size: 14px;
+        }
+
+        .btn-start {
+            background: linear-gradient(135deg, #00ff88, #00cc6f);
+            color: #0a0a0a;
+        }
+
+        .btn-stop {
+            background: linear-gradient(135deg, #ff4444, #cc0000);
+            color: white;
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0, 212, 255, 0.4);
+        }
+
+        .container {
+            padding: 20px 40px;
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+            gap: 20px;
+        }
+
+        .panel {
+            padding: 20px;
+            margin-bottom: 20px;
+        }
+
+        .panel h2 {
+            color: #00d4ff;
+            margin-bottom: 15px;
+            font-size: 20px;
+            border-bottom: 2px solid rgba(0, 212, 255, 0.3);
+            padding-bottom: 10px;
+        }
+
+        .metric-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 15px;
+            margin-top: 15px;
+        }
+
+        .metric-card {
+            padding: 15px;
+            background: rgba(0, 212, 255, 0.1);
+            border-left: 3px solid #00d4ff;
+            border-radius: 8px;
+        }
+
+        .metric-label {
+            font-size: 12px;
+            color: #888;
+            text-transform: uppercase;
+        }
+
+        .metric-value {
+            font-size: 24px;
+            font-weight: bold;
+            color: #00d4ff;
+            margin-top: 5px;
+        }
+
+        .topology-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+            gap: 10px;
+            margin-top: 15px;
+        }
+
+        .node-card {
+            padding: 15px;
+            text-align: center;
+            border-radius: 8px;
+            transition: all 0.3s;
+            cursor: pointer;
+        }
+
+        .node-card:hover {
+            transform: scale(1.05);
+        }
+
+        .node-healthy {
+            background: linear-gradient(135deg, rgba(0, 255, 136, 0.2), rgba(0, 204, 111, 0.2));
+            border: 2px solid #00ff88;
+        }
+
+        .node-degraded {
+            background: linear-gradient(135deg, rgba(255, 193, 7, 0.2), rgba(255, 152, 0, 0.2));
+            border: 2px solid #ffc107;
+        }
+
+        .node-down {
+            background: linear-gradient(135deg, rgba(255, 68, 68, 0.2), rgba(204, 0, 0, 0.2));
+            border: 2px solid #ff4444;
+        }
+
+        .node-type {
+            font-size: 10px;
+            text-transform: uppercase;
+            opacity: 0.7;
+        }
+
+        .node-id {
+            font-weight: bold;
+            margin: 5px 0;
+            font-size: 12px;
+        }
+
+        .node-status {
+            font-size: 10px;
+            padding: 3px 8px;
+            border-radius: 10px;
+            display: inline-block;
+            margin-top: 5px;
+        }
+
+        .log-container {
+            max-height: 300px;
+            overflow-y: auto;
+            background: rgba(0, 0, 0, 0.3);
+            border-radius: 8px;
+            padding: 10px;
+        }
+
+        .log-entry {
+            padding: 8px 12px;
+            margin: 5px 0;
+            border-radius: 5px;
+            font-size: 12px;
+            font-family: 'Courier New', monospace;
+            display: flex;
+            gap: 10px;
+        }
+
+        .log-info {
+            background: rgba(0, 212, 255, 0.1);
+            border-left: 3px solid #00d4ff;
+        }
+
+        .log-warning {
+            background: rgba(255, 193, 7, 0.1);
+            border-left: 3px solid #ffc107;
+        }
+
+        .log-success {
+            background: rgba(0, 255, 136, 0.1);
+            border-left: 3px solid #00ff88;
+        }
+
+        .log-timestamp {
+            color: #888;
+            font-size: 10px;
+        }
+
+        .incident-table {
+            width: 100%;
+            margin-top: 15px;
+            border-collapse: collapse;
+        }
+
+        .incident-table th {
+            background: rgba(0, 212, 255, 0.1);
+            padding: 10px;
+            text-align: left;
+            font-size: 12px;
+            border-bottom: 2px solid rgba(0, 212, 255, 0.3);
+        }
+
+        .incident-table td {
+            padding: 8px 10px;
+            font-size: 11px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+        }
+
+        .severity-critical {
+            color: #ff4444;
+            font-weight: bold;
+        }
+
+        .severity-warning {
+            color: #ffc107;
+            font-weight: bold;
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 10px;
+            margin-top: 15px;
+        }
+
+        .stat-card {
+            padding: 15px;
+            text-align: center;
+            background: rgba(0, 212, 255, 0.05);
+            border-radius: 8px;
+        }
+
+        .stat-value {
+            font-size: 28px;
+            font-weight: bold;
+            color: #00d4ff;
+        }
+
+        .stat-label {
+            font-size: 11px;
+            color: #888;
+            margin-top: 5px;
+            text-transform: uppercase;
+        }
+
+        .cycle-info {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            padding: 15px 25px;
+            background: rgba(10, 10, 30, 0.9);
+            border: 2px solid #00d4ff;
+            border-radius: 10px;
+            font-size: 14px;
+            box-shadow: 0 0 20px rgba(0, 212, 255, 0.5);
+        }
+
+        .pulse {
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+
+        /* Scrollbar styling */
+        ::-webkit-scrollbar {
+            width: 8px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: rgba(0, 0, 0, 0.3);
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: rgba(0, 212, 255, 0.5);
+            border-radius: 4px;
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background: rgba(0, 212, 255, 0.8);
+        }
+
+        .full-width {
+            grid-column: 1 / -1;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <div>
+            <h1>⚡ Autonomous Network Management System</h1>
+            <small style="color: #888;">Auto-inject → Detect → Analyze → Remediate → Stabilize → Repeat</small>
+        </div>
+        <div style="display: flex; align-items: center; gap: 20px;">
+            <div id="statusBadge" class="status-badge status-stopped">STOPPED</div>
+            <div class="controls">
+                <button class="btn btn-start" onclick="startNMS()">▶ Start</button>
+                <button class="btn btn-stop" onclick="stopNMS()">⏸ Stop</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="container">
+        <!-- Network Metrics -->
+        <div class="panel glass">
+            <h2>📊 Network Metrics</h2>
+            <div class="metric-grid">
+                <div class="metric-card">
+                    <div class="metric-label">Total Nodes</div>
+                    <div class="metric-value" id="totalNodes">0</div>
+                </div>
+                <div class="metric-card">
+                    <div class="metric-label">Healthy</div>
+                    <div class="metric-value" style="color: #00ff88;" id="healthyNodes">0</div>
+                </div>
+                <div class="metric-card">
+                    <div class="metric-label">Degraded</div>
+                    <div class="metric-value" style="color: #ffc107;" id="degradedNodes">0</div>
+                </div>
+                <div class="metric-card">
+                    <div class="metric-label">Down</div>
+                    <div class="metric-value" style="color: #ff4444;" id="downNodes">0</div>
+                </div>
+                <div class="metric-card">
+                    <div class="metric-label">Avg CPU</div>
+                    <div class="metric-value" id="avgCpu">0%</div>
+                </div>
+                <div class="metric-card">
+                    <div class="metric-label">Avg Memory</div>
+                    <div class="metric-value" id="avgMemory">0%</div>
+                </div>
+                <div class="metric-card">
+                    <div class="metric-label">Avg Latency</div>
+                    <div class="metric-value" id="avgLatency">0ms</div>
+                </div>
+                <div class="metric-card">
+                    <div class="metric-label">Health</div>
+                    <div class="metric-value" style="color: #00ff88;" id="healthPercent">100%</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Incident Statistics -->
+        <div class="panel glass">
+            <h2>🚨 Incident Statistics</h2>
+            <div class="stats-grid">
+                <div class="stat-card">
+                    <div class="stat-value" id="totalIncidents">0</div>
+                    <div class="stat-label">Total</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-value" style="color: #00ff88;" id="autoResolved">0</div>
+                    <div class="stat-label">Auto-Resolved</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-value" style="color: #ffc107;" id="manualIntervention">0</div>
+                    <div class="stat-label">Manual</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-value" id="resolutionRate">0%</div>
+                    <div class="stat-label">Auto-Fix Rate</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Network Topology -->
+        <div class="panel glass full-width">
+            <h2>🌐 Network Topology</h2>
+            <div class="topology-grid" id="topologyGrid"></div>
+        </div>
+
+        <!-- System Logs -->
+        <div class="panel glass full-width">
+            <h2>📝 System Logs</h2>
+            <div class="log-container" id="logContainer"></div>
+        </div>
+
+        <!-- Recent Incidents -->
+        <div class="panel glass full-width">
+            <h2>📋 Recent Incidents</h2>
+            <table class="incident-table">
+                <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>Timestamp</th>
+                        <th>Node</th>
+                        <th>Type</th>
+                        <th>Severity</th>
+                        <th>Status</th>
+                    </tr>
+                </thead>
+                <tbody id="incidentTableBody">
+                    <tr><td colspan="6" style="text-align: center; color: #888;">No incidents yet</td></tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <div class="cycle-info pulse">
+        <div style="font-weight: bold; color: #00d4ff;">Cycle: <span id="cycleCount">0</span></div>
+        <div style="font-size: 11px; color: #888; margin-top: 5px;">Polling mode (3s interval)</div>
+    </div>
+
+    <script>
+        let isRunning = false;
+        let pollInterval = null;
+
+        function startNMS() {
+            fetch('/api/start')
+                .then(response => response.json())
+                .then(data => {
+                    console.log(data);
+                    isRunning = true;
+                    updateStatusBadge();
+                    startPolling();
+                });
+        }
+
+        function stopNMS() {
+            fetch('/api/stop')
+                .then(response => response.json())
+                .then(data => {
+                    console.log(data);
+                    isRunning = false;
+                    updateStatusBadge();
+                    stopPolling();
+                });
+        }
+
+        function startPolling() {
+            if (pollInterval) return;
+            
+            // Initial load
+            fetchAllData();
+            
+            // Poll every 3 seconds
+            pollInterval = setInterval(() => {
+                fetchAllData();
+            }, 3000);
+        }
+
+        function stopPolling() {
+            if (pollInterval) {
+                clearInterval(pollInterval);
+                pollInterval = null;
+            }
+        }
+
+        function fetchAllData() {
+            fetch('/api/metrics')
+                .then(response => response.json())
+                .then(data => updateMetrics(data));
+            
+            fetch('/api/topology')
+                .then(response => response.json())
+                .then(data => updateTopology(data));
+            
+            fetch('/api/logs')
+                .then(response => response.json())
+                .then(data => updateLogs(data.logs));
+            
+            fetch('/api/incidents')
+                .then(response => response.json())
+                .then(data => updateIncidents(data));
+            
+            fetch('/api/status')
+                .then(response => response.json())
+                .then(data => {
+                    document.getElementById('cycleCount').textContent = data.cycle_count;
+                });
+        }
+
+        function updateStatusBadge() {
+            const badge = document.getElementById('statusBadge');
+            if (isRunning) {
+                badge.textContent = 'RUNNING';
+                badge.className = 'status-badge status-running';
+            } else {
+                badge.textContent = 'STOPPED';
+                badge.className = 'status-badge status-stopped';
+            }
+        }
+
+        function updateMetrics(data) {
+            if (data.summary) {
+                document.getElementById('totalNodes').textContent = data.summary.total_nodes;
+                document.getElementById('healthyNodes').textContent = data.summary.healthy;
+                document.getElementById('degradedNodes').textContent = data.summary.degraded;
+                document.getElementById('downNodes').textContent = data.summary.down;
+                document.getElementById('avgCpu').textContent = data.summary.avg_cpu + '%';
+                document.getElementById('avgMemory').textContent = data.summary.avg_memory + '%';
+                document.getElementById('avgLatency').textContent = data.summary.avg_latency + 'ms';
+                
+                const healthPercent = ((data.summary.healthy / data.summary.total_nodes) * 100).toFixed(1);
+                document.getElementById('healthPercent').textContent = healthPercent + '%';
+            }
+        }
+
+        function updateTopology(data) {
+            const grid = document.getElementById('topologyGrid');
+            grid.innerHTML = '';
+            
+            if (data.nodes) {
+                data.nodes.forEach(node => {
+                    const card = document.createElement('div');
+                    card.className = `node-card node-${node.status}`;
+                    card.innerHTML = `
+                        <div class="node-type">${node.type}</div>
+                        <div class="node-id">${node.id}</div>
+                        <div class="node-status">${node.status.toUpperCase()}</div>
+                        <div style="font-size: 9px; margin-top: 5px; color: #888;">
+                            CPU: ${node.cpu_usage}% | MEM: ${node.memory_usage}%
+                        </div>
+                    `;
+                    grid.appendChild(card);
+                });
+            }
+        }
+
+        function updateLogs(data) {
+            const container = document.getElementById('logContainer');
+            container.innerHTML = '';
+            
+            if (Array.isArray(data)) {
+                // Reverse to show newest first
+                const logs = [...data].reverse();
+                logs.forEach(log => {
+                    const entry = document.createElement('div');
+                    entry.className = `log-entry log-${log.level}`;
+                    const timestamp = new Date(log.timestamp).toLocaleTimeString();
+                    entry.innerHTML = `
+                        <span class="log-timestamp">[${timestamp}]</span>
+                        <span>${log.message}</span>
+                    `;
+                    container.appendChild(entry);
+                });
+            }
+        }
+
+        function updateIncidents(data) {
+            if (data.stats) {
+                document.getElementById('totalIncidents').textContent = data.stats.total_incidents;
+                document.getElementById('autoResolved').textContent = data.stats.auto_resolved;
+                document.getElementById('manualIntervention').textContent = data.stats.manual_intervention;
+                
+                const total = data.stats.total_incidents;
+                const autoRate = total > 0 ? ((data.stats.auto_resolved / total) * 100).toFixed(1) : 0;
+                document.getElementById('resolutionRate').textContent = autoRate + '%';
+            }
+            
+            if (data.recent_incidents && data.recent_incidents.length > 0) {
+                const tbody = document.getElementById('incidentTableBody');
+                tbody.innerHTML = '';
+                
+                // Show newest first
+                const incidents = [...data.recent_incidents].reverse();
+                incidents.forEach(incident => {
+                    const row = document.createElement('tr');
+                    const timestamp = new Date(incident.timestamp).toLocaleTimeString();
+                    row.innerHTML = `
+                        <td>#${incident.id}</td>
+                        <td>${timestamp}</td>
+                        <td>${incident.node_id}</td>
+                        <td>${incident.type}</td>
+                        <td class="severity-${incident.severity}">${incident.severity}</td>
+                        <td>${incident.status}</td>
+                    `;
+                    tbody.appendChild(row);
+                });
+            }
+        }
+
+        // Check initial status and load data
+        fetch('/api/status')
+            .then(response => response.json())
+            .then(data => {
+                isRunning = data.running;
+                updateStatusBadge();
+                if (isRunning) {
+                    startPolling();
+                } else {
+                    fetchAllData();  // Load initial data even when stopped
+                }
+            });
+    </script>
+</body>
+</html>
