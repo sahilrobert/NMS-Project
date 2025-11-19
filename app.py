@@ -10,7 +10,7 @@ from nms_core import AutonomousNMS
 
 app = Flask(__name__)
 app.config['SECRET_KEY'] = 'nms-secret-key-2024'
-socketio = SocketIO(app, cors_allowed_origins="*")
+socketio = SocketIO(app, cors_allowed_origins="*", async_mode='threading')
 
 # Global NMS instance
 nms = AutonomousNMS()
@@ -38,7 +38,7 @@ def background_nms_loop():
 @app.route('/')
 def index():
     """Serve main dashboard"""
-    return render_template('dashboard.html')
+    return render_template('dashboard_simple.html')
 
 @app.route('/api/start')
 def start_nms():
