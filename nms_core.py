@@ -449,8 +449,8 @@ class AutonomousNMS:
             "phases": {}
         }
         
-        # Phase 1: Inject failure (20% chance)
-        if random.random() < 0.2:
+        # Phase 1: Inject failure (30% chance)
+        if random.random() < 0.3:
             failure = self.failure_injector.inject_random_failure()
             if failure:
                 cycle_data["phases"]["inject"] = failure

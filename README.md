@@ -63,6 +63,22 @@ pip install -r requirements.txt
 
 ## Usage
 
+### Quick Start
+
+```bash
+# Run a quick demo
+python cli.py demo
+
+# Run tests
+python cli.py test
+
+# Start web server
+python cli.py server
+
+# Run in CLI mode (continuous cycles)
+python cli.py run
+```
+
 ### Start the NMS Server
 
 ```bash
