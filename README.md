@@ -145,4 +145,4 @@ Advaith Kundath
 Student Project - Wipro Network Management System
 
 Acknowledgments
-Academic project demonstrating automated network operations and intelligent alarm correlation for mod
+Academic project demonstrating automated network operations and intelligent alarm correlation for modern network management systems.
